@@ -282,7 +282,7 @@ function SetParameterValues(device, request, callback) {
     device[name][1] = xmlParser.decodeEntities(value.text);
     device[name][2] = xmlParser.parseAttrs(value.attrs).find(a => a.localName === "type").value;
 
-    pluginClass.handleSetParameters(device);
+    pluginClass.handleSetParameters(name, device);
   }
 
   let response = xmlUtils.node("cwmp:SetParameterValuesResponse", {}, xmlUtils.node("Status", {}, "0"));

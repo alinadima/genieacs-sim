@@ -17,7 +17,7 @@ class Plugin {
         console.log("perform");
     }
 
-    handleSetParameters(device) {
+    handleSetParameters(name, device) {
         console.log("Handle set parameters");
     }
 
@@ -26,7 +26,7 @@ class Plugin {
     }
 
     addPluginParamsToDataModel(exisitingParamsArray) {
-        console.log("Add Plugin params"); a = a.concat(b);
+        console.log("Add Plugin params");
     }
 
 }
