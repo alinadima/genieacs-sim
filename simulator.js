@@ -280,7 +280,7 @@ function start(dataModel, serialNumber, acsUrl, PluginClass) {
     password = device["InternetGatewayDevice.ManagementServer.Password"][1];
   }
 
-  plugin.setUp();
+  plugin.setUp(device);
 
   basicAuth = "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
 
@@ -298,7 +298,7 @@ function start(dataModel, serialNumber, acsUrl, PluginClass) {
     startSession();
   });
 
-  plugin.perform();
+  plugin.performFresh();
 }
 
 exports.start = start;

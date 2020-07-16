@@ -33,12 +33,18 @@ function inform(plugin, device, event, callback) {
       {}, 
       xmlParser.encodeEntities(device["Device.DeviceInfo.Manufacturer"][1])
     );
+    plugin.onEventReceived({"Device.DeviceInfo.Manufacturer": device["Device.DeviceInfo.Manufacturer"][1]});
   } else if (device["InternetGatewayDevice.DeviceInfo.Manufacturer"]) {
     manufacturer = xmlUtils.node(
       "Manufacturer",
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.Manufacturer"][1])
     );
+    plugin.onEventReceived({
+      "InternetGatewayDevice.DeviceInfo.Manufacturer": device["InternetGatewayDevice.DeviceInfo.Manufacturer"][1],
+
+    });
+
   }
 
   let oui = "";
@@ -48,12 +54,17 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.ManufacturerOUI"][1])
     );
+        plugin.onEventReceived(
+            {"Device.DeviceInfo.ManufacturerOUI": device["Device.DeviceInfo.ManufacturerOUI"][1]})
   } else if (device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"]) {
     oui = xmlUtils.node(
       "OUI",
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"][1])
     );
+
+    plugin.onEventReceived(
+            {"InternetGatewayDevice.DeviceInfo.ManufacturerOUI": device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"][1]})
   }
 
   let productClass = "";
@@ -63,12 +74,18 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.ProductClass"][1])
     );
+    plugin.onEventReceived(
+            {"Device.DeviceInfo.ProductClass": device["Device.DeviceInfo.ProductClass"][1]}
+        )
+
   } else if (device["InternetGatewayDevice.DeviceInfo.ProductClass"]) {
     productClass = xmlUtils.node(
       "ProductClass",
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.ProductClass"][1])
     );
+    plugin.onEventReceived(
+            {"InternetGatewayDevice.DeviceInfo.ProductClass": device["InternetGatewayDevice.DeviceInfo.ProductClass"][1]})
   }
 
   let serialNumber = "";
@@ -78,12 +95,16 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.SerialNumber"][1])
     );
+    plugin.onEventReceived(
+            {"Device.DeviceInfo.SerialNumber": device["Device.DeviceInfo.SerialNumber"][1]})
   } else if (device["InternetGatewayDevice.DeviceInfo.SerialNumber"]) {
     serialNumber = xmlUtils.node(
       "SerialNumber",
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.SerialNumber"][1])
     );
+    plugin.onEventReceived(
+            {"InternetGatewayDevice.DeviceInfo.SerialNumber": device["InternetGatewayDevice.DeviceInfo.SerialNumber"][1]})
   }
 
   let deviceId = xmlUtils.node("DeviceId", {}, [manufacturer, oui, productClass, serialNumber]);
@@ -208,6 +229,8 @@ function GetParameterValues(device, request, callback) {
     let name = p.text;
     let value = device[name][1];
     let type = device[name][2];
+
+    plugin.onEventReceived({[name]: value})
     let valueStruct = xmlUtils.node("ParameterValueStruct", {}, [
       xmlUtils.node("Name", {}, name),
       xmlUtils.node("Value", { "xsi:type": type }, xmlParser.encodeEntities(value))
@@ -230,6 +253,10 @@ function GetParameterValues(device, request, callback) {
 
 
 function SetParameterValues(device, request, callback) {
+    console.log("[TR-069 Client]-----------------------------------------------------------------------------\n")
+    console.log("[TR-069 Client] Set parameters call")
+    console.log("[TR-069 Client]-----------------------------------------------------------------------------\n")
+
   let parameterValues = request.children[0].children;
 
   for (let p of parameterValues) {
@@ -248,9 +275,14 @@ function SetParameterValues(device, request, callback) {
 
     device[name][1] = xmlParser.decodeEntities(value.text);
     device[name][2] = xmlParser.parseAttrs(value.attrs).find(a => a.localName === "type").value;
+
+    plugin.handleSetParameters(device);
   }
 
   let response = xmlUtils.node("cwmp:SetParameterValuesResponse", {}, xmlUtils.node("Status", {}, "0"));
+    console.log("[TR-069 Client]--------------------------------------------\n")
+    console.log(response)
+    console.log("[TR-069 Client]--------------------------------------------\n")
   return callback(response);
 }
 
@@ -324,8 +356,7 @@ function Download(device, request, callback) {
         if (res.statusCode === 200) {
           faultCode = "0";
           faultString = "";
-        }
-        else {
+                } else {
           faultCode = "9016";
           faultString = `Unexpected response ${res.statusCode}`;
         }
