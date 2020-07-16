@@ -21,6 +21,7 @@ let device = null;
 let httpAgent = null;
 let basicAuth;
 
+let plugin = null;
 
 function createSoapDocument(id, body) {
   let headerNode = xmlUtils.node(
@@ -106,7 +107,7 @@ function startSession(event) {
   pendingInform = false;
   const requestId = Math.random().toString(36).slice(-8);
 
-  methods.inform(device, event, function(body) {
+  methods.inform(plugin, device, event, function(body) {
     let xml = createSoapDocument(requestId, body);
     sendRequest(xml, function(xml) {
       cpeRequest();
@@ -255,11 +256,14 @@ function listenForConnectionRequests(serialNumber, acsUrlOptions, callback) {
       );
       return callback(null, connectionRequestUrl);
     });
+
+    plugin.perform();
   });
 }
 
-function start(dataModel, serialNumber, acsUrl) {
+function start(dataModel, serialNumber, acsUrl, PluginClass) {
   device = dataModel;
+  plugin = new PluginClass();
 
   if (device["Device.DeviceInfo.SerialNumber"])
     device["Device.DeviceInfo.SerialNumber"][1] = serialNumber;
@@ -276,6 +280,8 @@ function start(dataModel, serialNumber, acsUrl) {
     password = device["InternetGatewayDevice.ManagementServer.Password"][1];
   }
 
+  plugin.setUp();
+
   basicAuth = "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
 
   requestOptions = require("url").parse(acsUrl);
@@ -291,6 +297,8 @@ function start(dataModel, serialNumber, acsUrl) {
     }
     startSession();
   });
+
+  plugin.perform();
 }
 
 exports.start = start;

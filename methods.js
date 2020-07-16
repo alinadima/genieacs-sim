@@ -25,7 +25,7 @@ const INFORM_PARAMS = [
 ];
 
 
-function inform(device, event, callback) {
+function inform(plugin, device, event, callback) {
   let manufacturer = "";
   if (device["Device.DeviceInfo.Manufacturer"]) {
     manufacturer = xmlUtils.node(

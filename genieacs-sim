@@ -8,9 +8,10 @@ if (!cluster.isMaster) {
 
   const acsUrl = process.env["ACS_URL"];
   const dataModel = process.env["DATA_MODEL"];
+  const plugin = process.env["PLUGIN"];
   const serialNumber = process.env["SERIAL_NUMBER"];
 
-  simulator.start(require(dataModel), serialNumber, acsUrl);
+  simulator.start(require(dataModel), serialNumber, acsUrl, require(plugin));
   return;
 }
 
@@ -25,6 +26,7 @@ const program = require("commander")
   .description(pkg.description)
   .option("-u, --acs-url [url]", "ACS URL to contact (default: http://127.0.0.1:7547/)", "http://127.0.0.1:7547/")
   .option("-m, --data-model [filename]", "Data model template", resolvePath, "./data_model_202BC1-BM632w-8KA8WA1151100043.json")
+  .option("-p, --plugin [filename]", "Plugin Template", resolvePath, "./plugin.js")
   .option("-p, --processes [count]", "Number of devices to simulate (default: 1)", parseFloat, 1)
   .option("-w, --wait [milliseconds]", "Waiting period between process spawning (default: 1000)", parseFloat, 1000)
   .option("-s, --serial [offset]", "Serial number offset (default: 0)", parseFloat, 0)
@@ -54,6 +56,7 @@ for (let i = 0; i < program.processes; ++ i) {
       "SERIAL_NUMBER": `00000${program.serial + i}`.slice(-6),
       "ACS_URL": program.acsUrl,
       "DATA_MODEL": program.dataModel,
+      "PLUGIN": program.plugin
     };
     let worker = cluster.fork(env);
     worker.env = env;
