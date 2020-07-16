@@ -1,4 +1,4 @@
-# genieacs-sim
+# genieacs-sim fork to support adding plugins
 
 TR-069 client simulator for GenieACS, extended to support integration of potential plugins.
 
@@ -13,4 +13,5 @@ To use:
     ./genieacs-sim --help
 
 To run with the plugin file of your choice, create a plugin Javascript file and run:
-   ./genieacs-sim  -l YourPlugin.js
+   
+    ./genieacs-sim --help -l YourPlugin.js
