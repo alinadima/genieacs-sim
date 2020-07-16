@@ -5,7 +5,7 @@ const https = require("https");
 const xmlParser = require("./xml-parser");
 const xmlUtils = require("./xml-utils");
 
-const INFORM_PARAMS = [
+let INFORM_PARAMS = [
   "Device.DeviceInfo.SpecVersion",
   "InternetGatewayDevice.DeviceInfo.SpecVersion",
   "Device.DeviceInfo.HardwareVersion",
@@ -24,8 +24,12 @@ const INFORM_PARAMS = [
   "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress"
 ];
 
+let pluginClass = null;
 
 function inform(plugin, device, event, callback) {
+  if(!pluginClass) {
+    pluginClass = plugin;
+  }
   let manufacturer = "";
   if (device["Device.DeviceInfo.Manufacturer"]) {
     manufacturer = xmlUtils.node(
@@ -33,14 +37,14 @@ function inform(plugin, device, event, callback) {
       {}, 
       xmlParser.encodeEntities(device["Device.DeviceInfo.Manufacturer"][1])
     );
-    plugin.onEventReceived({"Device.DeviceInfo.Manufacturer": device["Device.DeviceInfo.Manufacturer"][1]});
+    pluginClass.onEventReceived({"Device.DeviceInfo.Manufacturer": device["Device.DeviceInfo.Manufacturer"][1]});
   } else if (device["InternetGatewayDevice.DeviceInfo.Manufacturer"]) {
     manufacturer = xmlUtils.node(
       "Manufacturer",
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.Manufacturer"][1])
     );
-    plugin.onEventReceived({
+    pluginClass.onEventReceived({
       "InternetGatewayDevice.DeviceInfo.Manufacturer": device["InternetGatewayDevice.DeviceInfo.Manufacturer"][1],
 
     });
@@ -54,7 +58,7 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.ManufacturerOUI"][1])
     );
-        plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"Device.DeviceInfo.ManufacturerOUI": device["Device.DeviceInfo.ManufacturerOUI"][1]})
   } else if (device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"]) {
     oui = xmlUtils.node(
@@ -63,7 +67,7 @@ function inform(plugin, device, event, callback) {
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"][1])
     );
 
-    plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"InternetGatewayDevice.DeviceInfo.ManufacturerOUI": device["InternetGatewayDevice.DeviceInfo.ManufacturerOUI"][1]})
   }
 
@@ -74,7 +78,7 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.ProductClass"][1])
     );
-    plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"Device.DeviceInfo.ProductClass": device["Device.DeviceInfo.ProductClass"][1]}
         )
 
@@ -84,7 +88,7 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.ProductClass"][1])
     );
-    plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"InternetGatewayDevice.DeviceInfo.ProductClass": device["InternetGatewayDevice.DeviceInfo.ProductClass"][1]})
   }
 
@@ -95,7 +99,7 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["Device.DeviceInfo.SerialNumber"][1])
     );
-    plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"Device.DeviceInfo.SerialNumber": device["Device.DeviceInfo.SerialNumber"][1]})
   } else if (device["InternetGatewayDevice.DeviceInfo.SerialNumber"]) {
     serialNumber = xmlUtils.node(
@@ -103,7 +107,7 @@ function inform(plugin, device, event, callback) {
       {},
       xmlParser.encodeEntities(device["InternetGatewayDevice.DeviceInfo.SerialNumber"][1])
     );
-    plugin.onEventReceived(
+    pluginClass.onEventReceived(
             {"InternetGatewayDevice.DeviceInfo.SerialNumber": device["InternetGatewayDevice.DeviceInfo.SerialNumber"][1]})
   }
 
@@ -123,6 +127,8 @@ function inform(plugin, device, event, callback) {
   }, eventStruct);
 
   let params = [];
+
+  INFORM_PARAMS = plugin.addPluginParamsToDataModel(INFORM_PARAMS);
   for (let p of INFORM_PARAMS) {
     let param = device[p];
     if (!param)
@@ -230,7 +236,7 @@ function GetParameterValues(device, request, callback) {
     let value = device[name][1];
     let type = device[name][2];
 
-    plugin.onEventReceived({[name]: value})
+    pluginClass.onEventReceived({[name]: value})
     let valueStruct = xmlUtils.node("ParameterValueStruct", {}, [
       xmlUtils.node("Name", {}, name),
       xmlUtils.node("Value", { "xsi:type": type }, xmlParser.encodeEntities(value))
@@ -276,7 +282,7 @@ function SetParameterValues(device, request, callback) {
     device[name][1] = xmlParser.decodeEntities(value.text);
     device[name][2] = xmlParser.parseAttrs(value.attrs).find(a => a.localName === "type").value;
 
-    plugin.handleSetParameters(device);
+    pluginClass.handleSetParameters(device);
   }
 
   let response = xmlUtils.node("cwmp:SetParameterValuesResponse", {}, xmlUtils.node("Status", {}, "0"));
